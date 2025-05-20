@@ -1,0 +1,1 @@
+// Zeb GX browser stub

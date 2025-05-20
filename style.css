@@ -1,0 +1,37 @@
+
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background-image: url('wallpaper.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+.desktop {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+.taskbar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px;
+}
+
+.control-center {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(50, 50, 50, 0.9);
+  color: white;
+  padding: 10px;
+  border-radius: 10px;
+}
