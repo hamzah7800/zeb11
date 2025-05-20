@@ -3,132 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zeb11 OS - Updated Taskbar</title>
+  <title>Zeb11 OS</title>
   <link rel="stylesheet" href="style.css" />
   <script type="module" src="index.js"></script>
 </head>
 <body>
   <div id="desktop" class="desktop">
-    <div id="control-center" class="control-center">
-      Zeb11 Control Center<br />
-      <label><input type="checkbox" id="vpnToggle" /> VPN (stub)</label>
-      <br /><label><input type="checkbox" id="proxyToggle" /> Proxy (stub)</label>
-    </div>
+    <div id="control-center" class="control-center">Zeb11 Control Center</div>
     <div id="taskbar" class="taskbar">
-      <div class="taskbar-left">
-        <button onclick="launchApp('zebgx')">Zeb GX</button>
-        <button onclick="launchApp('store')">Zeb Store</button>
-      </div>
-      <div class="taskbar-center">
-        <button id="startButton" class="start-button" onclick="toggleStartMenu()"></button>
-      </div>
-      <div class="taskbar-right">
-        <button onclick="launchApp('settings')">Settings</button>
-      </div>
+      <button onclick="launchApp('zebgx')">Zeb GX</button>
+      <button onclick="launchApp('store')">Zeb Store</button>
+      <button onclick="launchApp('settings')">Settings</button>
     </div>
-    <iframe id="appFrame" class="app-frame" style="display:none;"></iframe>
   </div>
 </body>
 </html>
-"""
-
-updated_style_css = """
-body, html {
-  margin: 0;
-  padding: 0;
-  font-family: sans-serif;
-  background-image: url('wallpaper.jpg');
-  background-size: cover;
-  background-position: center;
-  touch-action: manipulation;
-}
-
-.desktop {
-  width: 100vw;
-  height: 100vh;
-  position: relative;
-  overflow: hidden;
-}
-
-.taskbar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 50px;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-}
-
-.taskbar-left, .taskbar-right {
-  display: flex;
-  gap: 10px;
-}
-
-.taskbar-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.start-button {
-  width: 40px;
-  height: 40px;
-  background-color: red;
-  border-radius: 50%;
-  border: 2px solid white;
-  cursor: pointer;
-}
-
-.control-center {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(50, 50, 50, 0.9);
-  color: white;
-  padding: 10px;
-  border-radius: 10px;
-}
-
-.app-frame {
-  position: absolute;
-  top: 50px;
-  left: 0;
-  right: 0;
-  bottom: 50px;
-  width: 100%;
-  height: calc(100% - 100px);
-  border: none;
-  background: white;
-}
-"""
-
-updated_index_js = """
-function launchApp(app) {
-  const iframe = document.getElementById('appFrame');
-  if (app === 'zebgx') {
-    iframe.src = 'apps/zebgx.html';
-  } else if (app === 'store') {
-    iframe.src = 'apps/store.html';
-  } else if (app === 'settings') {
-    iframe.src = 'apps/settings.html';
-  }
-  iframe.style.display = 'block';
-}
-
-function toggleStartMenu() {
-  alert('Start Menu coming soon...');
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('vpnToggle').addEventListener('change', (e) => {
-    alert('VPN toggled: ' + (e.target.checked ? 'ON' : 'OFF'));
-  });
-  document.getElementById('proxyToggle').addEventListener('change', (e) => {
-    alert('Proxy toggled: ' + (e.target.checked ? 'ON' : 'OFF'));
-  });
-});
