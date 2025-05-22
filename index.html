@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Zeb11 - Web OS</title>
   <style>
     html, body {
@@ -28,8 +28,8 @@
       height: 45px;
       background: #1e1e1e;
       display: flex;
+      justify-content: center;
       align-items: center;
-      padding: 0 10px;
       box-shadow: 0 -1px 5px rgba(0,0,0,0.3);
     }
 
@@ -40,20 +40,18 @@
       border-radius: 50%;
       border: none;
       cursor: pointer;
-      margin-right: 10px;
     }
 
     .window {
       position: absolute;
-      width: 500px;
-      height: 350px;
+      width: 600px;
+      height: 400px;
       background: white;
       border: 1px solid #ccc;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
       top: 100px;
       left: 100px;
-      resize: both;
-      overflow: hidden;
+      z-index: 1000;
       display: flex;
       flex-direction: column;
     }
@@ -66,29 +64,34 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+
+    .title-bar span {
+      flex-grow: 1;
       user-select: none;
     }
 
-    .window-controls button {
-      background: none;
-      color: white;
+    .controls button {
+      background: transparent;
       border: none;
-      font-weight: bold;
-      margin-left: 5px;
+      color: white;
+      font-size: 16px;
+      width: 30px;
       cursor: pointer;
     }
 
     .window iframe {
       flex-grow: 1;
-      border: none;
       width: 100%;
+      border: none;
     }
 
     #start-menu {
       position: absolute;
       bottom: 55px;
-      left: 50px;
-      width: 240px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 250px;
       background: white;
       border: 1px solid #ccc;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
@@ -111,22 +114,25 @@
   <div id="desktop">
     <div id="start-menu">
       <!-- Core Apps -->
-      <div onclick="openApp('ZebGX Browser', 'https://iamnotapro.lolo.pro')">ZebGX Browser</div>
+      <div onclick="openApp('ZebGX Browser', 'apps/ZebGX/index.html')">ZebGX Browser</div>
       <div onclick="openApp('Settings', 'apps/Settings/settings.html')">Settings</div>
       <div onclick="openApp('Zeb Store', 'apps/Store/store.html')">Zeb Store</div>
       <div onclick="openApp('Task Manager', 'apps/TaskManager/taskmanager.html')">Task Manager</div>
       <div onclick="openApp('Control Center', 'apps/ControlCenter/controlcenter.html')">Control Center</div>
-      <div onclick="openApp('Installer', 'apps/PackageInstaller/installer.html')">Package Installer</div>
-      <!-- New Apps -->
+      <div onclick="openApp('Package Installer', 'apps/PackageInstaller/installer.html')">Package Installer</div>
+
+      <!-- Functional Apps -->
       <div onclick="openApp('Notepad', 'apps/Notepad/notepad.html')">Notepad</div>
       <div onclick="openApp('Terminal', 'apps/Terminal/terminal.html')">Terminal</div>
       <div onclick="openApp('Benchmark', 'apps/Benchmark/benchmark.html')">Benchmark</div>
       <div onclick="openApp('Themes', 'apps/Themes/themes.html')">Themes</div>
-      <!-- System -->
+
+      <!-- System Controls -->
       <div onclick="alert('System turning off...')">Turn Off</div>
       <div onclick="alert('Restarting...')">Restart</div>
       <div onclick="alert('Hibernating...')">Hibernate</div>
     </div>
+
     <div id="taskbar">
       <button id="start-btn" onclick="toggleStartMenu()"></button>
     </div>
@@ -140,74 +146,80 @@
 
     function openApp(title, url) {
       toggleStartMenu();
+
       const win = document.createElement("div");
       win.className = "window";
 
-      win.innerHTML = `
-        <div class="title-bar" onmousedown="dragStart(event, this.parentElement)">
-          <span>${title}</span>
-          <div class="window-controls">
-            <button onclick="minimizeWindow(this)">–</button>
-            <button onclick="maximizeRestoreWindow(this)">🗖</button>
-            <button onclick="closeWindow(this)">✕</button>
-          </div>
-        </div>
-        <iframe src="${url}" title="${title}"></iframe>
-      `;
+      const titleBar = document.createElement("div");
+      titleBar.className = "title-bar";
 
-      document.getElementById("desktop").appendChild(win);
-    }
+      const titleText = document.createElement("span");
+      titleText.textContent = title;
 
-    function closeWindow(btn) {
-      btn.closest('.window').remove();
-    }
+      const controls = document.createElement("div");
+      controls.className = "controls";
 
-    function minimizeWindow(btn) {
-      btn.closest('.window').style.display = 'none';
-      // Optional: Add icon to taskbar to restore
-    }
-
-    function maximizeRestoreWindow(btn) {
-      const win = btn.closest('.window');
-      if (win.dataset.maximized === "true") {
-        win.style.top = win.dataset.prevTop;
-        win.style.left = win.dataset.prevLeft;
-        win.style.width = win.dataset.prevWidth;
-        win.style.height = win.dataset.prevHeight;
-        win.dataset.maximized = "false";
-      } else {
-        win.dataset.prevTop = win.style.top;
-        win.dataset.prevLeft = win.style.left;
-        win.dataset.prevWidth = win.style.width;
-        win.dataset.prevHeight = win.style.height;
-        win.style.top = "0";
-        win.style.left = "0";
-        win.style.width = "100%";
-        win.style.height = "calc(100% - 45px)";
-        win.dataset.maximized = "true";
-      }
-    }
-
-    function dragStart(e, windowEl) {
-      e.preventDefault();
-      let shiftX = e.clientX - windowEl.getBoundingClientRect().left;
-      let shiftY = e.clientY - windowEl.getBoundingClientRect().top;
-
-      function moveAt(pageX, pageY) {
-        windowEl.style.left = pageX - shiftX + 'px';
-        windowEl.style.top = pageY - shiftY + 'px';
-      }
-
-      function onMouseMove(e) {
-        moveAt(e.pageX, e.pageY);
-      }
-
-      document.addEventListener('mousemove', onMouseMove);
-
-      document.onmouseup = function() {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.onmouseup = null;
+      const minBtn = document.createElement("button");
+      minBtn.innerHTML = "&#x2013;";
+      minBtn.onclick = () => {
+        iframe.style.display = iframe.style.display === "none" ? "block" : "none";
       };
+
+      const maxBtn = document.createElement("button");
+      maxBtn.innerHTML = "&#x2610;";
+      maxBtn.onclick = () => {
+        if (win.style.position === "absolute") {
+          win.style.top = "0";
+          win.style.left = "0";
+          win.style.width = "100%";
+          win.style.height = "100%";
+        } else {
+          win.style.width = "600px";
+          win.style.height = "400px";
+          win.style.top = "100px";
+          win.style.left = "100px";
+        }
+      };
+
+      const closeBtn = document.createElement("button");
+      closeBtn.innerHTML = "&#x2715;";
+      closeBtn.onclick = () => {
+        win.remove();
+      };
+
+      controls.append(minBtn, maxBtn, closeBtn);
+      titleBar.append(titleText, controls);
+
+      const iframe = document.createElement("iframe");
+      iframe.src = url;
+      iframe.title = title;
+
+      win.append(titleBar, iframe);
+      document.getElementById("desktop").appendChild(win);
+
+      makeDraggable(win, titleBar);
+    }
+
+    function makeDraggable(element, handle) {
+      let offsetX = 0, offsetY = 0, isDragging = false;
+
+      handle.addEventListener('mousedown', function (e) {
+        isDragging = true;
+        offsetX = e.clientX - element.offsetLeft;
+        offsetY = e.clientY - element.offsetTop;
+        element.style.zIndex = Date.now(); // bring to front
+      });
+
+      document.addEventListener('mousemove', function (e) {
+        if (isDragging) {
+          element.style.left = (e.clientX - offsetX) + "px";
+          element.style.top = (e.clientY - offsetY) + "px";
+        }
+      });
+
+      document.addEventListener('mouseup', function () {
+        isDragging = false;
+      });
     }
   </script>
 </body>
