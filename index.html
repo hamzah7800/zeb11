@@ -89,12 +89,21 @@
 <body>
   <div id="desktop">
     <div id="start-menu">
-      <div onclick="openApp('ZebGX', 'https://iamnotapro.lolo.pro')">ZebGX Browser</div>
+      <!-- Core Apps -->
+      <div onclick="openApp('ZebGX Browser', 'https://iamnotapro.lolo.pro')">ZebGX Browser</div>
       <div onclick="openApp('Settings', 'apps/Settings/settings.html')">Settings</div>
       <div onclick="openApp('Zeb Store', 'apps/Store/store.html')">Zeb Store</div>
       <div onclick="openApp('Task Manager', 'apps/TaskManager/taskmanager.html')">Task Manager</div>
       <div onclick="openApp('Control Center', 'apps/ControlCenter/controlcenter.html')">Control Center</div>
       <div onclick="openApp('Installer', 'apps/PackageInstaller/installer.html')">Package Installer</div>
+
+      <!-- New Functional Apps -->
+      <div onclick="openApp('Notepad', 'apps/Notepad/notepad.html')">Notepad</div>
+      <div onclick="openApp('Terminal', 'apps/Terminal/terminal.html')">Terminal</div>
+      <div onclick="openApp('Benchmark', 'apps/Benchmark/benchmark.html')">Benchmark</div>
+      <div onclick="openApp('Themes', 'apps/Themes/themes.html')">Themes</div>
+
+      <!-- System Controls -->
       <div onclick="alert('System turning off...')">Turn Off</div>
       <div onclick="alert('Restarting...')">Restart</div>
       <div onclick="alert('Hibernating...')">Hibernate</div>
@@ -115,7 +124,7 @@
       toggleStartMenu();
       const win = document.createElement("div");
       win.className = "window";
-      win.innerHTML = `<iframe src="${url}"></iframe>`;
+      win.innerHTML = `<iframe title="${title}" src="${url}"></iframe>`;
       document.getElementById("desktop").appendChild(win);
     }
   </script>
