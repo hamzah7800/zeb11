@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Zeb11 - Web OS</title>
   <style>
     html, body {
@@ -28,8 +28,8 @@
       height: 45px;
       background: #1e1e1e;
       display: flex;
-      justify-content: center;
       align-items: center;
+      padding: 0 10px;
       box-shadow: 0 -1px 5px rgba(0,0,0,0.3);
     }
 
@@ -40,12 +40,13 @@
       border-radius: 50%;
       border: none;
       cursor: pointer;
+      margin-right: 10px;
     }
 
     .window {
       position: absolute;
-      width: 400px;
-      height: 300px;
+      width: 500px;
+      height: 350px;
       background: white;
       border: 1px solid #ccc;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
@@ -53,60 +54,41 @@
       left: 100px;
       resize: both;
       overflow: hidden;
-      z-index: 1000;
       display: flex;
       flex-direction: column;
     }
 
-    .window iframe {
-      flex: 1;
-      width: 100%;
-      border: none;
-    }
-
     .title-bar {
-      height: 32px;
-      background: #f2f2f2;
-      color: black;
-      padding: 0 10px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      background: #0078D7;
+      color: white;
+      padding: 5px 10px;
       cursor: move;
-      border-bottom: 1px solid #ccc;
-    }
-
-    .title-bar .title {
-      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
     }
 
     .window-controls button {
       background: none;
+      color: white;
       border: none;
-      font-size: 14px;
-      margin-left: 8px;
+      font-weight: bold;
+      margin-left: 5px;
       cursor: pointer;
     }
 
-    .window-controls button:hover {
-      background: rgba(0,0,0,0.1);
-      border-radius: 3px;
-    }
-
-    .window.fullscreen {
-      top: 0 !important;
-      left: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      resize: none !important;
+    .window iframe {
+      flex-grow: 1;
+      border: none;
+      width: 100%;
     }
 
     #start-menu {
       position: absolute;
       bottom: 55px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 220px;
+      left: 50px;
+      width: 240px;
       background: white;
       border: 1px solid #ccc;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
@@ -135,27 +117,22 @@
       <div onclick="openApp('Task Manager', 'apps/TaskManager/taskmanager.html')">Task Manager</div>
       <div onclick="openApp('Control Center', 'apps/ControlCenter/controlcenter.html')">Control Center</div>
       <div onclick="openApp('Installer', 'apps/PackageInstaller/installer.html')">Package Installer</div>
-
-      <!-- New Functional Apps -->
+      <!-- New Apps -->
       <div onclick="openApp('Notepad', 'apps/Notepad/notepad.html')">Notepad</div>
       <div onclick="openApp('Terminal', 'apps/Terminal/terminal.html')">Terminal</div>
       <div onclick="openApp('Benchmark', 'apps/Benchmark/benchmark.html')">Benchmark</div>
       <div onclick="openApp('Themes', 'apps/Themes/themes.html')">Themes</div>
-
-      <!-- System Controls -->
+      <!-- System -->
       <div onclick="alert('System turning off...')">Turn Off</div>
       <div onclick="alert('Restarting...')">Restart</div>
       <div onclick="alert('Hibernating...')">Hibernate</div>
     </div>
-
     <div id="taskbar">
       <button id="start-btn" onclick="toggleStartMenu()"></button>
     </div>
   </div>
 
   <script>
-    let zIndex = 1000;
-
     function toggleStartMenu() {
       const menu = document.getElementById("start-menu");
       menu.style.display = menu.style.display === "block" ? "none" : "block";
@@ -163,17 +140,15 @@
 
     function openApp(title, url) {
       toggleStartMenu();
-
       const win = document.createElement("div");
       win.className = "window";
-      win.style.zIndex = ++zIndex;
 
       win.innerHTML = `
-        <div class="title-bar" onmousedown="dragMouseDown(event, this.parentElement)">
-          <span class="title">${title}</span>
+        <div class="title-bar" onmousedown="dragStart(event, this.parentElement)">
+          <span>${title}</span>
           <div class="window-controls">
-            <button onclick="minimizeWindow(this)">_</button>
-            <button onclick="maximizeWindow(this)">🗖</button>
+            <button onclick="minimizeWindow(this)">–</button>
+            <button onclick="maximizeRestoreWindow(this)">🗖</button>
             <button onclick="closeWindow(this)">✕</button>
           </div>
         </div>
@@ -184,45 +159,55 @@
     }
 
     function closeWindow(btn) {
-      btn.closest(".window").remove();
+      btn.closest('.window').remove();
     }
 
     function minimizeWindow(btn) {
-      const win = btn.closest(".window");
-      win.style.display = "none";
+      btn.closest('.window').style.display = 'none';
+      // Optional: Add icon to taskbar to restore
     }
 
-    function maximizeWindow(btn) {
-      const win = btn.closest(".window");
-      const isMax = win.classList.toggle("fullscreen");
-      if (!isMax) {
-        win.style.top = "100px";
-        win.style.left = "100px";
-        win.style.width = "400px";
-        win.style.height = "300px";
+    function maximizeRestoreWindow(btn) {
+      const win = btn.closest('.window');
+      if (win.dataset.maximized === "true") {
+        win.style.top = win.dataset.prevTop;
+        win.style.left = win.dataset.prevLeft;
+        win.style.width = win.dataset.prevWidth;
+        win.style.height = win.dataset.prevHeight;
+        win.dataset.maximized = "false";
+      } else {
+        win.dataset.prevTop = win.style.top;
+        win.dataset.prevLeft = win.style.left;
+        win.dataset.prevWidth = win.style.width;
+        win.dataset.prevHeight = win.style.height;
+        win.style.top = "0";
+        win.style.left = "0";
+        win.style.width = "100%";
+        win.style.height = "calc(100% - 45px)";
+        win.dataset.maximized = "true";
       }
     }
 
-    function dragMouseDown(e, win) {
+    function dragStart(e, windowEl) {
       e.preventDefault();
-      win.style.zIndex = ++zIndex;
-      let pos3 = e.clientX, pos4 = e.clientY;
+      let shiftX = e.clientX - windowEl.getBoundingClientRect().left;
+      let shiftY = e.clientY - windowEl.getBoundingClientRect().top;
 
-      function elementDrag(e2) {
-        e2.preventDefault();
-        win.style.top = (win.offsetTop - (pos4 - e2.clientY)) + "px";
-        win.style.left = (win.offsetLeft - (pos3 - e2.clientX)) + "px";
-        pos3 = e2.clientX;
-        pos4 = e2.clientY;
+      function moveAt(pageX, pageY) {
+        windowEl.style.left = pageX - shiftX + 'px';
+        windowEl.style.top = pageY - shiftY + 'px';
       }
 
-      function closeDragElement() {
-        document.removeEventListener("mouseup", closeDragElement);
-        document.removeEventListener("mousemove", elementDrag);
+      function onMouseMove(e) {
+        moveAt(e.pageX, e.pageY);
       }
 
-      document.addEventListener("mouseup", closeDragElement);
-      document.addEventListener("mousemove", elementDrag);
+      document.addEventListener('mousemove', onMouseMove);
+
+      document.onmouseup = function() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.onmouseup = null;
+      };
     }
   </script>
 </body>
