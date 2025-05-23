@@ -9,78 +9,208 @@
       padding: 0;
       height: 100%;
       font-family: 'Segoe UI', sans-serif;
-      background: #111;
+      background: #f0f0f0;
       overflow: hidden;
     }
 
-    #login-screen {
-      position: absolute;
+    #boot-screen, #login-screen {
+      position: fixed;
       top: 0;
       left: 0;
-      height: 100%;
       width: 100%;
-      background: url('assets/wallpapers/default.jpg') center/cover no-repeat;
+      height: 100%;
+      background: black;
       display: flex;
-      align-items: center;
-      justify-content: center;
       flex-direction: column;
-      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      color: white;
+      font-size: 32px;
     }
 
-    #login-box {
-      background: rgba(255,255,255,0.9);
-      padding: 40px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    #boot-logo {
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    #boot-spinner {
+      margin-top: 20px;
+      width: 40px;
+      height: 40px;
+      border: 5px solid #ffffff40;
+      border-top: 5px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    #login-screen {
+      display: none;
+      flex-direction: column;
+      gap: 15px;
+      background: linear-gradient(to bottom right, #222, #444);
+    }
+
+    #login-screen input {
+      padding: 10px;
+      font-size: 16px;
+      width: 200px;
+      border: none;
+      border-radius: 4px;
       text-align: center;
     }
 
-    #login-box input {
-      width: 200px;
-      padding: 10px;
-      margin: 10px 0;
-      font-size: 16px;
-    }
-
-    #login-box button {
+    #login-screen button {
       padding: 10px 20px;
       font-size: 16px;
       background: #0078D7;
-      color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      color: white;
     }
 
-    #login-box button:hover {
-      background: #005fa3;
-    }
-
-    #desktop, #taskbar, #start-menu {
+    #desktop {
       display: none;
+      width: 100%;
+      height: 100%;
+      background: #fff url('assets/wallpapers/default.jpg') center/cover no-repeat;
+      position: relative;
     }
 
-    /* Desktop & UI styles from earlier */
-    /* (Copy all the previously provided styles here for .window, .taskbar, etc.) */
+    #taskbar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 45px;
+      background: #1e1e1e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 -1px 5px rgba(0,0,0,0.3);
+    }
 
-    /* Reinsert previously defined styles here... */
-    /* To keep it short here, I’ll assume you're combining this with the previous response’s CSS */
+    #start-btn {
+      background-color: red;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+    }
+
+    .window {
+      position: absolute;
+      width: 400px;
+      height: 300px;
+      background: white;
+      border: 1px solid #ccc;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      top: 100px;
+      left: 100px;
+      resize: both;
+      overflow: hidden;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .window iframe {
+      flex: 1;
+      width: 100%;
+      border: none;
+    }
+
+    .title-bar {
+      height: 32px;
+      background: #f2f2f2;
+      color: black;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: move;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .title-bar .title {
+      font-weight: bold;
+    }
+
+    .window-controls button {
+      background: none;
+      border: none;
+      font-size: 14px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    .window-controls button:hover {
+      background: rgba(0,0,0,0.1);
+      border-radius: 3px;
+    }
+
+    .window.fullscreen {
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      resize: none !important;
+    }
+
+    #start-menu {
+      position: absolute;
+      bottom: 55px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 220px;
+      max-height: 300px;
+      background: white;
+      border: 1px solid #ccc;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 2000;
+      overflow-y: auto;
+    }
+
+    #start-menu div {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+
+    #start-menu div:hover {
+      background: #f5f5f5;
+    }
   </style>
 </head>
 <body>
-  <!-- Login Screen -->
-  <div id="login-screen">
-    <div id="login-box">
-      <h2>Welcome to Zeb11</h2>
-      <input type="text" id="username" placeholder="Username">
-      <input type="password" id="password" placeholder="Password">
-      <br>
-      <button onclick="login()">Login</button>
-      <p id="login-error" style="color: red; display: none;">Incorrect credentials</p>
-    </div>
+
+  <!-- Boot Animation -->
+  <div id="boot-screen">
+    <div id="boot-logo">Zeb11</div>
+    <div id="boot-spinner"></div>
   </div>
 
-  <!-- Main OS Desktop -->
+  <!-- Login Screen -->
+  <div id="login-screen">
+    <input id="username" placeholder="Username">
+    <input id="password" placeholder="Password" type="password">
+    <button onclick="login()">Login</button>
+    <div id="login-error" style="color:red; font-size:14px;"></div>
+  </div>
+
+  <!-- Desktop Environment -->
   <div id="desktop">
     <div id="start-menu">
       <div onclick="openApp('ZebGX Browser', 'https://iamnotapro.lolo.pro')">ZebGX Browser</div>
@@ -94,39 +224,39 @@
       <div onclick="openApp('Benchmark', 'apps/Benchmark/benchmark.html')">Benchmark</div>
       <div onclick="openApp('Themes', 'apps/Themes/themes.html')">Themes</div>
       <div onclick="alert('System turning off...')">Turn Off</div>
-      <div onclick="alert('Restarting...')">Restart</div>
+      <div onclick="restartZeb11()">Restart</div>
       <div onclick="alert('Hibernating...')">Hibernate</div>
     </div>
-
     <div id="taskbar">
       <button id="start-btn" onclick="toggleStartMenu()"></button>
     </div>
   </div>
 
-  <!-- JS -->
   <script>
-    function login() {
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-      const error = document.getElementById("login-error");
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        document.getElementById("boot-screen").style.display = "none";
+        document.getElementById("login-screen").style.display = "flex";
+      }, 2500);
+    });
 
-      if (username === "hamzah" && password === "1989") {
+    let zIndex = 1000;
+
+    function login() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      if (user === "hamzah" && pass === "1989") {
         document.getElementById("login-screen").style.display = "none";
         document.getElementById("desktop").style.display = "block";
-        document.getElementById("taskbar").style.display = "flex";
       } else {
-        error.style.display = "block";
+        document.getElementById("login-error").innerText = "Incorrect username or password.";
       }
     }
 
-    // Toggle Start Menu
     function toggleStartMenu() {
       const menu = document.getElementById("start-menu");
       menu.style.display = menu.style.display === "block" ? "none" : "block";
     }
-
-    // Open App Window
-    let zIndex = 1000;
 
     function openApp(title, url) {
       toggleStartMenu();
@@ -154,12 +284,19 @@
     }
 
     function minimizeWindow(btn) {
-      btn.closest(".window").style.display = "none";
+      const win = btn.closest(".window");
+      win.style.display = "none";
     }
 
     function maximizeWindow(btn) {
       const win = btn.closest(".window");
-      win.classList.toggle("fullscreen");
+      const isMax = win.classList.toggle("fullscreen");
+      if (!isMax) {
+        win.style.top = "100px";
+        win.style.left = "100px";
+        win.style.width = "400px";
+        win.style.height = "300px";
+      }
     }
 
     function dragMouseDown(e, win) {
@@ -182,6 +319,13 @@
 
       document.addEventListener("mouseup", closeDragElement);
       document.addEventListener("mousemove", elementDrag);
+    }
+
+    function restartZeb11() {
+      document.getElementById("boot-screen").style.display = "flex";
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
     }
   </script>
 </body>
