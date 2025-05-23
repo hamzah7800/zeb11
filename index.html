@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Zeb11 - WEB OS</title>
   <style>
     html, body {
@@ -196,7 +196,7 @@
 </head>
 <body>
 
-  <!-- Boot Animation -->
+  <!-- Boot Screen -->
   <div id="boot-screen">
     <div id="boot-logo">Zeb11</div>
     <div id="boot-spinner"></div>
@@ -204,8 +204,8 @@
 
   <!-- Login Screen -->
   <div id="login-screen">
-    <input id="username" placeholder="Username">
-    <input id="password" placeholder="Password" type="password">
+    <input id="username" placeholder="Username" />
+    <input id="password" type="password" placeholder="Password" />
     <button onclick="login()">Login</button>
     <div id="login-error" style="color:red; font-size:14px;"></div>
   </div>
@@ -223,7 +223,7 @@
       <div onclick="openApp('Terminal', 'apps/Terminal/terminal.html')">Terminal</div>
       <div onclick="openApp('Benchmark', 'apps/Benchmark/benchmark.html')">Benchmark</div>
       <div onclick="openApp('Themes', 'apps/Themes/themes.html')">Themes</div>
-      <div onclick="openApp('File system', 'apps/File system/index.html)">File System</div>
+      <div onclick="openApp('File system', 'apps/File system/index.html')">File System</div>
       <div onclick="alert('System turning off...')">Turn Off</div>
       <div onclick="restartZeb11()">Restart</div>
       <div onclick="alert('Hibernating...')">Hibernate</div>
@@ -324,9 +324,7 @@
 
     function restartZeb11() {
       document.getElementById("boot-screen").style.display = "flex";
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
+      setTimeout(() => location.reload(), 1000);
     }
   </script>
 </body>
