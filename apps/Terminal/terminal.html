@@ -2,206 +2,142 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Zeb11 Notepad + Terminal</title>
+  <title>Web IDE</title>
   <style>
-    :root {
-      --bg: #ffffff;
-      --fg: #000000;
-      --accent: #0078d7;
-    }
-    [data-theme="dark"] {
-      --bg: #1e1e1e;
-      --fg: #ffffff;
-      --accent: #0a84ff;
-    }
     body {
       margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--fg);
       display: flex;
-      height: 100vh;
       flex-direction: column;
+      height: 100vh;
+      font-family: sans-serif; /* Added a basic font */
     }
+
     #toolbar {
-      background: var(--accent);
-      color: white;
+      background-color: #333;
+      color: #fff;
       padding: 10px;
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end; /* Align button to the right */
       align-items: center;
     }
-    #main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-    textarea, iframe, #terminal {
-      font-size: 14px;
-      font-family: monospace;
-      background: var(--bg);
-      color: var(--fg);
+
+    #toolbar button {
+      background-color: #007bff;
+      color: white;
       border: none;
-      padding: 10px;
-      resize: none;
-      outline: none;
-    }
-    textarea {
-      width: 50%;
-      height: 100%;
-    }
-    #rightPane {
-      display: flex;
-      flex-direction: column;
-      width: 50%;
-    }
-    #terminal {
-      height: 50%;
-      border-top: 1px solid #ccc;
-      overflow-y: auto;
-    }
-    iframe {
-      height: 50%;
-      border-top: 1px solid #ccc;
-      width: 100%;
-    }
-    button {
-      background: white;
-      color: var(--accent);
-      border: none;
-      padding: 5px 10px;
-      margin-left: 5px;
+      padding: 8px 12px;
       cursor: pointer;
-      border-radius: 3px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    #toolbar button:hover {
+      background-color: #0056b3;
+    }
+
+    #editor-container, #terminal-container {
+      flex: 1;
+      display: flex;
+    }
+
+    #editor-container {
+      width: 70%;
+      border-right: 1px solid #555; /* Separator for better visuals */
+    }
+
+    #terminal-container {
+      width: 30%;
+      background-color: #000;
+      color: #fff;
+      padding: 10px; /* Add some padding to the terminal */
+      box-sizing: border-box; /* Include padding in width */
+      overflow: auto; /* Enable scrolling for terminal content */
     }
   </style>
 </head>
-<body data-theme="light">
+<body>
   <div id="toolbar">
-    <span>Zeb11 Editor + Terminal</span>
-    <div>
-      <button onclick="toggleTheme()">Toggle Theme</button>
-      <button onclick="saveFile()">Save</button>
-      <button onclick="runPreview()">Run</button>
-    </div>
+    <button id="theme-toggle">Toggle Theme</button>
+  </div>
+  <div style="display: flex; flex: 1;"> <div id="editor-container"></div>
+    <div id="terminal-container"></div>
   </div>
 
-  <div id="main">
-    <textarea id="editor" placeholder="Write HTML/JS here..."></textarea>
-    <div id="rightPane">
-      <iframe id="preview"></iframe>
-      <div id="terminal" contenteditable="true"></div>
-    </div>
-  </div>
+  <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
+  <script src="https://unpkg.com/monaco-editor/min/vs/loader.js"></script>
+  <script src="https://unpkg.com/browserfs"></script>
+  <script src="https://unpkg.com/@stackblitz/webcontainer"></script>
+  <script type="module">
+    // Ensure xterm.css is loaded for terminal styling
+    const xtermCss = document.createElement('link');
+    xtermCss.rel = 'stylesheet';
+    xtermCss.href = 'https://unpkg.com/xterm/css/xterm.css';
+    document.head.appendChild(xtermCss);
 
-  <script>
-    const editor = document.getElementById("editor");
-    const terminal = document.getElementById("terminal");
-    const preview = document.getElementById("preview");
-    let commandHistory = [];
-    let historyIndex = -1;
+    // Initialize Monaco Editor
+    require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor/min/vs' }});
+    let editor; // Declare editor globally or in a scope accessible by theme toggle
+    require(['vs/editor/editor.main'], function() {
+      editor = monaco.editor.create(document.getElementById('editor-container'), {
+        value: '// Start coding...',
+        language: 'javascript',
+        theme: 'vs-dark'
+      });
+    });
 
-    // Toggle dark/light mode
-    function toggleTheme() {
-      const body = document.body;
-      const isDark = body.getAttribute("data-theme") === "dark";
-      body.setAttribute("data-theme", isDark ? "light" : "dark");
-    }
+    // Set Up xterm.js Terminal
+    const terminal = new Terminal();
+    terminal.open(document.getElementById('terminal-container'));
+    terminal.write('Welcome to the Web IDE\r\n$ ');
 
-    // Run HTML/JS in preview pane
-    function runPreview() {
-      const code = editor.value;
-      preview.srcdoc = code;
-    }
-
-    // Save to IndexedDB
-    function saveFile() {
-      const dbReq = indexedDB.open("ZebFS", 1);
-      dbReq.onupgradeneeded = () => {
-        const db = dbReq.result;
-        if (!db.objectStoreNames.contains("files")) {
-          db.createObjectStore("files");
-        }
-      };
-      dbReq.onsuccess = () => {
-        const db = dbReq.result;
-        const tx = db.transaction("files", "readwrite");
-        const store = tx.objectStore("files");
-        store.put(editor.value, "index.html");
-        alert("Saved to ZebFS!");
-      };
-    }
-
-    // Load from IndexedDB
-    window.onload = () => {
-      const dbReq = indexedDB.open("ZebFS", 1);
-      dbReq.onsuccess = () => {
-        const db = dbReq.result;
-        const tx = db.transaction("files", "readonly");
-        const store = tx.objectStore("files");
-        const getReq = store.get("index.html");
-        getReq.onsuccess = () => {
-          if (getReq.result) {
-            editor.value = getReq.result;
-          }
-        };
-      };
-    };
-
-    // Handle terminal input with command history
-    terminal.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const lines = terminal.innerText.trim().split("\n");
-        const command = lines[lines.length - 1];
-        commandHistory.push(command);
-        historyIndex = commandHistory.length;
-        processCommand(command);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        if (historyIndex > 0) {
-          historyIndex--;
-          insertCommand(commandHistory[historyIndex]);
-        }
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        if (historyIndex < commandHistory.length - 1) {
-          historyIndex++;
-          insertCommand(commandHistory[historyIndex]);
-        }
+    // Implement Theme Toggle
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      if (editor) { // Ensure editor is initialized before trying to change theme
+        const currentTheme = editor.getTheme(); // Use editor instance to get theme
+        const newTheme = currentTheme.themeName === 'vs-dark' ? 'vs-light' : 'vs-dark'; // Access themeName property
+        monaco.editor.setTheme(newTheme);
       }
     });
 
-    function insertCommand(cmd) {
-      const lines = terminal.innerText.split("\n");
-      lines[lines.length - 1] = cmd;
-      terminal.innerText = lines.join("\n");
-      placeCursorAtEnd(terminal);
+    // Integrate WebContainers for Node.js Support
+    // Note: WebContainer import requires type="module" in the script tag
+    import { WebContainer } from '@stackblitz/webcontainer';
+
+    async function initializeWebContainer() {
+      const webContainer = await WebContainer.boot();
+
+      await webContainer.mount({
+        'index.js': {
+          file: {
+            contents: 'console.log("Hello from Node.js in the browser");'
+          }
+        }
+      });
+
+      const process = await webContainer.spawn('node', ['index.js']);
+
+      process.output.pipeTo(new WritableStream({
+        write(data) {
+          terminal.write(data);
+        }
+      }));
     }
 
-    function placeCursorAtEnd(el) {
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-    }
+    initializeWebContainer(); // Call the async function
 
-    function processCommand(cmd) {
-      const output = `\n> ${cmd}\n${evalSafe(cmd)}\n`;
-      terminal.innerText += output;
-      placeCursorAtEnd(terminal);
-    }
-
-    function evalSafe(code) {
-      try {
-        return eval(code);
-      } catch (e) {
-        return "Error: " + e.message;
-      }
-    }
+    // Set Up Virtual File System
+    BrowserFS.configure({ fs: "IndexedDB", options: {} }, function(err) {
+      if (err) return console.error(err);
+      const fs = BrowserFS.BFSRequire('fs');
+      fs.writeFile('/test.txt', 'Hello World', function(err) {
+        if (err) return console.error(err);
+        fs.readFile('/test.txt', 'utf8', function(err, data) {
+          if (err) return console.error(err);
+          console.log("BrowserFS content:", data); // Log to browser console
+          terminal.write(`\r\nBrowserFS content: ${data}\r\n$ `); // Output to xterm.js
+        });
+      });
+    });
   </script>
 </body>
 </html>
