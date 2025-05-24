@@ -9,7 +9,7 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
-      font-family: sans-serif; /* Added a basic font */
+      font-family: sans-serif;
     }
 
     #toolbar {
@@ -17,7 +17,7 @@
       color: #fff;
       padding: 10px;
       display: flex;
-      justify-content: flex-end; /* Align button to the right */
+      justify-content: space-between; /* Space out items */
       align-items: center;
     }
 
@@ -29,37 +29,42 @@
       cursor: pointer;
       border-radius: 4px;
       font-size: 14px;
+      margin-left: 10px; /* Spacing between buttons */
     }
 
     #toolbar button:hover {
       background-color: #0056b3;
     }
 
-    #editor-container, #terminal-container {
-      flex: 1;
+    #editor-terminal-split {
       display: flex;
+      flex: 1;
     }
 
     #editor-container {
-      width: 70%;
-      border-right: 1px solid #555; /* Separator for better visuals */
+      flex: 3; /* Editor takes more space */
+      border-right: 1px solid #555;
     }
 
     #terminal-container {
-      width: 30%;
+      flex: 2; /* Terminal takes less space */
       background-color: #000;
       color: #fff;
-      padding: 10px; /* Add some padding to the terminal */
-      box-sizing: border-box; /* Include padding in width */
-      overflow: auto; /* Enable scrolling for terminal content */
+      padding: 10px;
+      box-sizing: border-box;
+      overflow: hidden; /* xterm handles its own scrolling */
     }
   </style>
 </head>
 <body>
   <div id="toolbar">
+    <div>
+      <button id="run-button">Run Code</button>
+    </div>
     <button id="theme-toggle">Toggle Theme</button>
   </div>
-  <div style="display: flex; flex: 1;"> <div id="editor-container"></div>
+  <div id="editor-terminal-split">
+    <div id="editor-container"></div>
     <div id="terminal-container"></div>
   </div>
 
@@ -74,27 +79,49 @@
     xtermCss.href = 'https://unpkg.com/xterm/css/xterm.css';
     document.head.appendChild(xtermCss);
 
+    let editor; // Declare editor globally
+    let webContainerInstance; // Declare webContainerInstance globally
+    let shellProcess; // To hold the active shell process
+
     // Initialize Monaco Editor
     require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor/min/vs' }});
-    let editor; // Declare editor globally or in a scope accessible by theme toggle
     require(['vs/editor/editor.main'], function() {
       editor = monaco.editor.create(document.getElementById('editor-container'), {
-        value: '// Start coding...',
+        value: '// Write your Node.js code here...\nconsole.log("Hello from Web IDE!");',
         language: 'javascript',
         theme: 'vs-dark'
+      });
+
+      // Adjust editor layout on window resize
+      window.addEventListener('resize', () => {
+        editor.layout();
       });
     });
 
     // Set Up xterm.js Terminal
-    const terminal = new Terminal();
+    const terminal = new Terminal({
+      cursorBlink: true,
+      convertEol: true
+    });
     terminal.open(document.getElementById('terminal-container'));
-    terminal.write('Welcome to the Web IDE\r\n$ ');
+    terminal.write('Welcome to the Web IDE!\r\n');
+    terminal.write('Initializing WebContainer...\r\n');
+
+    // Handle terminal input
+    let currentLine = '';
+    terminal.onData(e => {
+      // Send data to the WebContainer shell process
+      if (shellProcess) {
+        shellProcess.input.write(e);
+      }
+    });
+
 
     // Implement Theme Toggle
     document.getElementById('theme-toggle').addEventListener('click', () => {
-      if (editor) { // Ensure editor is initialized before trying to change theme
-        const currentTheme = editor.getTheme(); // Use editor instance to get theme
-        const newTheme = currentTheme.themeName === 'vs-dark' ? 'vs-light' : 'vs-dark'; // Access themeName property
+      if (editor) {
+        const currentTheme = editor.getTheme();
+        const newTheme = currentTheme.themeName === 'vs-dark' ? 'vs-light' : 'vs-dark';
         monaco.editor.setTheme(newTheme);
       }
     });
@@ -104,37 +131,94 @@
     import { WebContainer } from '@stackblitz/webcontainer';
 
     async function initializeWebContainer() {
-      const webContainer = await WebContainer.boot();
+      webContainerInstance = await WebContainer.boot();
+      terminal.write('WebContainer ready!\r\n');
 
-      await webContainer.mount({
+      // Mount an initial index.js file
+      await webContainerInstance.mount({
         'index.js': {
           file: {
-            contents: 'console.log("Hello from Node.js in the browser");'
+            contents: editor.getValue()
           }
         }
       });
 
-      const process = await webContainer.spawn('node', ['index.js']);
+      // Spawn a shell process for interactive terminal
+      shellProcess = await webContainerInstance.spawn('jsh', {
+        env: {
+          PS1: '$ ' // Set a simple prompt
+        }
+      });
 
-      process.output.pipeTo(new WritableStream({
+      // Pipe shell output to the terminal
+      shellProcess.output.pipeTo(new WritableStream({
         write(data) {
           terminal.write(data);
         }
       }));
+
+      // Handle shell exit (e.g., if the user types 'exit')
+      shellProcess.exit.then((code) => {
+        terminal.write(`\r\njsh exited with code ${code}\r\n`);
+        shellProcess = null; // Clear the process
+      });
     }
 
-    initializeWebContainer(); // Call the async function
+    initializeWebContainer(); // Call the async function to boot WebContainer
 
-    // Set Up Virtual File System
+    // Run Code from Editor
+    document.getElementById('run-button').addEventListener('click', async () => {
+      if (!webContainerInstance) {
+        terminal.write('\r\nWebContainer not ready yet. Please wait...\r\n');
+        return;
+      }
+
+      terminal.write('\r\nRunning code...\r\n');
+      const codeToRun = editor.getValue();
+
+      // Write the current editor content to a file in the WebContainer
+      await webContainerInstance.fs.writeFile('runme.js', codeToRun);
+
+      // Execute the file using Node.js
+      const runProcess = await webContainerInstance.spawn('node', ['runme.js']);
+
+      // Pipe output to terminal
+      runProcess.output.pipeTo(new WritableStream({
+        write(data) {
+          terminal.write(data);
+        }
+      }));
+
+      // Wait for the process to finish
+      const exitCode = await runProcess.exit;
+      terminal.write(`\r\nCode finished with exit code: ${exitCode}\r\n`);
+      terminal.write('$ '); // Show prompt again
+    });
+
+    // Set Up Virtual File System (BrowserFS)
+    // This is separate from WebContainer's internal file system.
+    // It's useful if you want persistent storage in the browser's IndexedDB.
     BrowserFS.configure({ fs: "IndexedDB", options: {} }, function(err) {
-      if (err) return console.error(err);
+      if (err) {
+        console.error("BrowserFS Error:", err);
+        terminal.write(`\r\nBrowserFS Error: ${err.message}\r\n`);
+        return;
+      }
       const fs = BrowserFS.BFSRequire('fs');
-      fs.writeFile('/test.txt', 'Hello World', function(err) {
-        if (err) return console.error(err);
-        fs.readFile('/test.txt', 'utf8', function(err, data) {
-          if (err) return console.error(err);
-          console.log("BrowserFS content:", data); // Log to browser console
-          terminal.write(`\r\nBrowserFS content: ${data}\r\n$ `); // Output to xterm.js
+      fs.writeFile('/browserfs_test.txt', 'Hello from BrowserFS!', function(err) {
+        if (err) {
+          console.error("BrowserFS Write Error:", err);
+          terminal.write(`\r\nBrowserFS Write Error: ${err.message}\r\n`);
+          return;
+        }
+        fs.readFile('/browserfs_test.txt', 'utf8', function(err, data) {
+          if (err) {
+            console.error("BrowserFS Read Error:", err);
+            terminal.write(`\r\nBrowserFS Read Error: ${err.message}\r\n`);
+            return;
+          }
+          console.log("BrowserFS content (in browser console):", data);
+          terminal.write(`\r\nBrowserFS loaded: ${data}\r\n`);
         });
       });
     });
