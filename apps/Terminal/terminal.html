@@ -3,148 +3,311 @@
 <head>
   <meta charset="UTF-8" />
   <title>Web IDE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --gnome-bg-dark: #2e3436;
+      --gnome-header-bg: #3c3c3c;
+      --gnome-text-light: #eeeeee;
+      --gnome-accent-blue: #3465a4;
+      --gnome-border-light: #555753;
+      --gnome-shadow-light: rgba(0, 0, 0, 0.4);
+    }
+
     body {
       margin: 0;
       display: flex;
       flex-direction: column;
       height: 100vh;
-      font-family: sans-serif;
-      background-color: #1e1e1e; /* Dark background for overall app */
-      color: #ccc;
+      font-family: 'Ubuntu', sans-serif;
+      background-color: var(--gnome-bg-dark);
+      color: var(--gnome-text-light);
+      overflow: hidden;
     }
 
     #toolbar {
-      background-color: #252526; /* Slightly lighter dark for toolbar */
-      color: #fff;
-      padding: 10px;
+      background-color: var(--gnome-header-bg);
+      color: var(--gnome-text-light);
+      padding: 10px 15px;
       display: flex;
-      justify-content: flex-start; /* Align button to the left */
+      justify-content: flex-start;
       align-items: center;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+      box-shadow: 0 2px 8px var(--gnome-shadow-light);
+      z-index: 10;
+    }
+
+    #toolbar h1 {
+      font-size: 1.2rem;
+      margin: 0;
+      font-weight: normal;
+      color: var(--gnome-text-light);
     }
 
     #toolbar button {
-      background-color: #007acc; /* VS Code blue for run button */
+      background-color: var(--gnome-accent-blue);
       color: white;
       border: none;
-      padding: 8px 15px;
+      padding: 10px 20px;
       cursor: pointer;
-      border-radius: 4px;
-      font-size: 14px;
-      transition: background-color 0.2s ease;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      margin-left: 20px;
     }
 
     #toolbar button:hover {
-      background-color: #005f99;
+      background-color: #204a87;
+      transform: translateY(-1px);
+    }
+
+    #toolbar button:active {
+      transform: translateY(0);
     }
 
     #editor-terminal-split {
       display: flex;
       flex: 1;
-      overflow: hidden; /* Prevent overall scrollbars if children overflow */
+      overflow: hidden;
+      position: relative;
     }
 
     #editor-container {
-      flex: 3; /* Editor takes more space */
-      border-right: 1px solid #333; /* Darker separator */
-      background-color: #1e1e1e; /* Match body for seamless look */
-      overflow: hidden; /* Monaco handles its own scrolling */
+      flex: 3;
+      border-right: 1px solid var(--gnome-border-light);
+      background-color: #212121;
+      overflow: hidden;
     }
 
     #terminal-container {
-      flex: 2; /* Terminal takes less space */
-      background-color: #000; /* Classic terminal black */
-      color: #eee; /* Light grey text for readability */
-      padding: 5px; /* Reduced padding as xterm handles its own padding */
+      flex: 2;
+      background-color: #000;
+      color: #eee;
+      padding: 0;
       box-sizing: border-box;
-      /* xterm.js handles its own scrolling, so overflow: hidden is appropriate here */
       overflow: hidden;
-      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; /* Monospaced font for terminal */
-      font-size: 14px;
+      font-family: 'Ubuntu Mono', monospace;
+      font-size: 1rem;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* Style for the xterm.js input line (if needed, xterm handles most of it) */
-    .xterm-rows > div > span {
-      white-space: pre-wrap; /* Ensure text wraps */
-      word-break: break-all; /* Break long words */
+    .xterm .xterm-viewport {
+      overflow-y: auto;
+    }
+
+    #mobile-input-hack {
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        z-index: -1;
+    }
+
+    #tap-to-type-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      cursor: pointer;
+      z-index: 5;
+      pointer-events: auto;
+      text-align: center;
+      flex-direction: column;
+    }
+
+    #tap-to-type-overlay p {
+        margin: 0;
+        padding: 10px;
+        background-color: var(--gnome-accent-blue);
+        border-radius: 8px;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+        #tap-to-type-overlay {
+            display: none !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+      #editor-terminal-split {
+        flex-direction: column;
+      }
+
+      #editor-container, #terminal-container {
+        width: 100%;
+        flex: 1;
+        border-right: none;
+        border-bottom: 1px solid var(--gnome-border-light);
+      }
+
+      #toolbar button {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+      }
+
+      #toolbar h1 {
+        font-size: 1rem;
+      }
+
+      #terminal-container {
+        font-size: 0.9rem;
+      }
+
+      #tap-to-type-overlay {
+        font-size: 1.2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #toolbar button {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+      }
+      #toolbar h1 {
+        font-size: 0.9rem;
+      }
+      #terminal-container {
+        font-size: 0.8rem;
+      }
+      #tap-to-type-overlay {
+        font-size: 1rem;
+      }
     }
   </style>
 </head>
 <body>
   <div id="toolbar">
+    <h1>Web IDE</h1>
     <button id="run-button">Run Code</button>
   </div>
   <div id="editor-terminal-split">
     <div id="editor-container"></div>
-    <div id="terminal-container"></div>
+    <div id="terminal-container">
+        <input type="text" id="mobile-input-hack" aria-label="Terminal input hack" />
+        <div id="tap-to-type-overlay">
+            <p>Tap here to type in terminal</p>
+            <small>(Virtual keyboard will appear)</small>
+        </div>
+    </div>
   </div>
 
   <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
   <script src="https://unpkg.com/monaco-editor/min/vs/loader.js"></script>
   <script src="https://unpkg.com/browserfs"></script>
   <script src="https://unpkg.com/@stackblitz/webcontainer"></script>
+
   <script type="module">
-    // Ensure xterm.css is loaded for terminal styling
     const xtermCss = document.createElement('link');
     xtermCss.rel = 'stylesheet';
     xtermCss.href = 'https://unpkg.com/xterm/css/xterm.css';
     document.head.appendChild(xtermCss);
 
-    let editor; // Declare editor globally
-    let webContainerInstance; // Declare webContainerInstance globally
-    let shellProcess; // To hold the active shell process
+    let editor;
+    let webContainerInstance;
+    let shellProcess;
 
-    // Initialize Monaco Editor
+    const mobileInputHack = document.getElementById('mobile-input-hack');
+    const tapToTypeOverlay = document.getElementById('tap-to-type-overlay');
+
     require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor/min/vs' }});
     require(['vs/editor/editor.main'], function() {
       editor = monaco.editor.create(document.getElementById('editor-container'), {
-        value: '// Write your Node.js code here...\nconsole.log("Hello from Web IDE!");',
+        value: '// Write your Node.js code here...\nconsole.log("Hello from Web IDE!");\n',
         language: 'javascript',
-        theme: 'vs-dark' // Force dark mode
-      });
-
-      // Adjust editor layout on window resize
-      window.addEventListener('resize', () => {
-        editor.layout();
+        theme: 'vs-dark',
+        automaticLayout: true,
+        minimap: { enabled: false },
+        fontSize: 16,
+        fontFamily: 'Ubuntu Mono, Consolas, "Courier New", monospace'
       });
     });
 
-    // Set Up xterm.js Terminal
     const terminal = new Terminal({
       cursorBlink: true,
       convertEol: true,
-      fontFamily: '"Cascadia Code", "Fira Code", "Consolas", monospace', // Apply font to terminal
-      fontSize: 14,
+      fontFamily: '"Ubuntu Mono", monospace',
+      fontSize: 16,
       theme: {
-        background: '#000000', // Ensure xterm's background is black
-        foreground: '#eeeeee', // Light grey text
+        background: '#000000',
+        foreground: '#eeeeee',
         cursor: '#eeeeee',
-        selection: '#555555'
-      }
+        selection: '#555555',
+        black: '#000000',
+        red: '#cc0000',
+        green: '#4e9a06',
+        yellow: '#c4a000',
+        blue: '#3465a4',
+        magenta: '#75507b',
+        cyan: '#06989a',
+        white: '#d3d7cf',
+        brightBlack: '#555753',
+        brightRed: '#ef2929',
+        brightGreen: '#8ae234',
+        brightYellow: '#fce94f',
+        brightBlue: '#729fcf',
+        brightMagenta: '#ad7fa8',
+        brightCyan: '#34e2e2',
+        brightWhite: '#eeeeec'
+      },
+      tabStopWidth: 8,
+      allowProposedApi: true
     });
     terminal.open(document.getElementById('terminal-container'));
     terminal.write('Welcome to the Web IDE!\r\n');
     terminal.write('Initializing WebContainer...\r\n');
 
-    // Handle terminal input
     terminal.onData(e => {
-      // Send data to the WebContainer shell process
-      if (shellProcess) {
+      if (shellProcess && shellProcess.input) {
         shellProcess.input.write(e);
       }
     });
 
-    // --- Removed Theme Toggle functionality ---
+    function focusTerminal() {
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
 
-    // Integrate WebContainers for Node.js Support
+        if (isTouchDevice) {
+            tapToTypeOverlay.style.display = 'flex';
+            tapToTypeOverlay.onclick = () => {
+                mobileInputHack.focus();
+                tapToTypeOverlay.style.display = 'none';
+            };
+        } else {
+            terminal.focus();
+            tapToTypeOverlay.style.display = 'none';
+        }
+    }
+
+    mobileInputHack.addEventListener('input', (e) => {
+        const value = e.target.value;
+        if (value.length > 0) {
+            shellProcess.input.write(value);
+            e.target.value = '';
+        }
+    });
+
+    terminal.onBlur(() => {
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+        if (isTouchDevice && tapToTypeOverlay.style.display === 'none') {
+            mobileInputHack.focus();
+        }
+    });
+
     import { WebContainer } from '@stackblitz/webcontainer';
 
     async function initializeWebContainer() {
       webContainerInstance = await WebContainer.boot();
       terminal.write('WebContainer ready! Type commands below:\r\n');
 
-      // Mount an initial index.js file with the editor content
       await webContainerInstance.mount({
         'index.js': {
           file: {
@@ -153,62 +316,56 @@
         }
       });
 
-      // Spawn a shell process for interactive terminal
       shellProcess = await webContainerInstance.spawn('jsh', {
         env: {
-          PS1: '\x1b[1;32m$\x1b[0m ' // Green dollar prompt ($)
+          PS1: '\x1b[1;32m$\x1b[0m '
         }
       });
 
-      // Pipe shell output to the terminal
       shellProcess.output.pipeTo(new WritableStream({
         write(data) {
           terminal.write(data);
         }
       }));
 
-      // Handle shell exit (e.g., if the user types 'exit')
       shellProcess.exit.then((code) => {
         terminal.write(`\r\njsh exited with code ${code}\r\n`);
-        shellProcess = null; // Clear the process
+        shellProcess = null;
       });
+
+      focusTerminal();
     }
 
-    initializeWebContainer(); // Call the async function to boot WebContainer
+    initializeWebContainer();
 
-    // Run Code from Editor
     document.getElementById('run-button').addEventListener('click', async () => {
       if (!webContainerInstance) {
         terminal.write('\r\nWebContainer not ready yet. Please wait...\r\n');
         return;
       }
 
-      // Clear terminal before running
-      terminal.write('\x1bc'); // ANSI escape code to clear terminal
+      terminal.write('\x1bc');
 
       terminal.write('\r\nRunning code...\r\n');
       const codeToRun = editor.getValue();
 
-      // Write the current editor content to a file in the WebContainer
       await webContainerInstance.fs.writeFile('runme.js', codeToRun);
 
-      // Execute the file using Node.js
       const runProcess = await webContainerInstance.spawn('node', ['runme.js']);
 
-      // Pipe output to terminal
       runProcess.output.pipeTo(new WritableStream({
         write(data) {
           terminal.write(data);
         }
       }));
 
-      // Wait for the process to finish
       const exitCode = await runProcess.exit;
       terminal.write(`\r\nCode finished with exit code: ${exitCode}\r\n`);
-      terminal.write('\x1b[1;32m$\x1b[0m '); // Show prompt again in green
+      terminal.write('\x1b[1;32m$\x1b[0m ');
+
+      focusTerminal();
     });
 
-    // Set Up Virtual File System (BrowserFS) - for persistent browser storage
     BrowserFS.configure({ fs: "IndexedDB", options: {} }, function(err) {
       if (err) {
         console.error("BrowserFS Error:", err);
