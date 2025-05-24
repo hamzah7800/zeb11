@@ -10,58 +10,70 @@
       flex-direction: column;
       height: 100vh;
       font-family: sans-serif;
+      background-color: #1e1e1e; /* Dark background for overall app */
+      color: #ccc;
     }
 
     #toolbar {
-      background-color: #333;
+      background-color: #252526; /* Slightly lighter dark for toolbar */
       color: #fff;
       padding: 10px;
       display: flex;
-      justify-content: space-between; /* Space out items */
+      justify-content: flex-start; /* Align button to the left */
       align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
     }
 
     #toolbar button {
-      background-color: #007bff;
+      background-color: #007acc; /* VS Code blue for run button */
       color: white;
       border: none;
-      padding: 8px 12px;
+      padding: 8px 15px;
       cursor: pointer;
       border-radius: 4px;
       font-size: 14px;
-      margin-left: 10px; /* Spacing between buttons */
+      transition: background-color 0.2s ease;
     }
 
     #toolbar button:hover {
-      background-color: #0056b3;
+      background-color: #005f99;
     }
 
     #editor-terminal-split {
       display: flex;
       flex: 1;
+      overflow: hidden; /* Prevent overall scrollbars if children overflow */
     }
 
     #editor-container {
       flex: 3; /* Editor takes more space */
-      border-right: 1px solid #555;
+      border-right: 1px solid #333; /* Darker separator */
+      background-color: #1e1e1e; /* Match body for seamless look */
+      overflow: hidden; /* Monaco handles its own scrolling */
     }
 
     #terminal-container {
       flex: 2; /* Terminal takes less space */
-      background-color: #000;
-      color: #fff;
-      padding: 10px;
+      background-color: #000; /* Classic terminal black */
+      color: #eee; /* Light grey text for readability */
+      padding: 5px; /* Reduced padding as xterm handles its own padding */
       box-sizing: border-box;
-      overflow: hidden; /* xterm handles its own scrolling */
+      /* xterm.js handles its own scrolling, so overflow: hidden is appropriate here */
+      overflow: hidden;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; /* Monospaced font for terminal */
+      font-size: 14px;
+    }
+
+    /* Style for the xterm.js input line (if needed, xterm handles most of it) */
+    .xterm-rows > div > span {
+      white-space: pre-wrap; /* Ensure text wraps */
+      word-break: break-all; /* Break long words */
     }
   </style>
 </head>
 <body>
   <div id="toolbar">
-    <div>
-      <button id="run-button">Run Code</button>
-    </div>
-    <button id="theme-toggle">Toggle Theme</button>
+    <button id="run-button">Run Code</button>
   </div>
   <div id="editor-terminal-split">
     <div id="editor-container"></div>
@@ -89,7 +101,7 @@
       editor = monaco.editor.create(document.getElementById('editor-container'), {
         value: '// Write your Node.js code here...\nconsole.log("Hello from Web IDE!");',
         language: 'javascript',
-        theme: 'vs-dark'
+        theme: 'vs-dark' // Force dark mode
       });
 
       // Adjust editor layout on window resize
@@ -101,14 +113,21 @@
     // Set Up xterm.js Terminal
     const terminal = new Terminal({
       cursorBlink: true,
-      convertEol: true
+      convertEol: true,
+      fontFamily: '"Cascadia Code", "Fira Code", "Consolas", monospace', // Apply font to terminal
+      fontSize: 14,
+      theme: {
+        background: '#000000', // Ensure xterm's background is black
+        foreground: '#eeeeee', // Light grey text
+        cursor: '#eeeeee',
+        selection: '#555555'
+      }
     });
     terminal.open(document.getElementById('terminal-container'));
     terminal.write('Welcome to the Web IDE!\r\n');
     terminal.write('Initializing WebContainer...\r\n');
 
     // Handle terminal input
-    let currentLine = '';
     terminal.onData(e => {
       // Send data to the WebContainer shell process
       if (shellProcess) {
@@ -116,25 +135,16 @@
       }
     });
 
-
-    // Implement Theme Toggle
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      if (editor) {
-        const currentTheme = editor.getTheme();
-        const newTheme = currentTheme.themeName === 'vs-dark' ? 'vs-light' : 'vs-dark';
-        monaco.editor.setTheme(newTheme);
-      }
-    });
+    // --- Removed Theme Toggle functionality ---
 
     // Integrate WebContainers for Node.js Support
-    // Note: WebContainer import requires type="module" in the script tag
     import { WebContainer } from '@stackblitz/webcontainer';
 
     async function initializeWebContainer() {
       webContainerInstance = await WebContainer.boot();
-      terminal.write('WebContainer ready!\r\n');
+      terminal.write('WebContainer ready! Type commands below:\r\n');
 
-      // Mount an initial index.js file
+      // Mount an initial index.js file with the editor content
       await webContainerInstance.mount({
         'index.js': {
           file: {
@@ -146,7 +156,7 @@
       // Spawn a shell process for interactive terminal
       shellProcess = await webContainerInstance.spawn('jsh', {
         env: {
-          PS1: '$ ' // Set a simple prompt
+          PS1: '\x1b[1;32m$\x1b[0m ' // Green dollar prompt ($)
         }
       });
 
@@ -173,6 +183,9 @@
         return;
       }
 
+      // Clear terminal before running
+      terminal.write('\x1bc'); // ANSI escape code to clear terminal
+
       terminal.write('\r\nRunning code...\r\n');
       const codeToRun = editor.getValue();
 
@@ -192,12 +205,10 @@
       // Wait for the process to finish
       const exitCode = await runProcess.exit;
       terminal.write(`\r\nCode finished with exit code: ${exitCode}\r\n`);
-      terminal.write('$ '); // Show prompt again
+      terminal.write('\x1b[1;32m$\x1b[0m '); // Show prompt again in green
     });
 
-    // Set Up Virtual File System (BrowserFS)
-    // This is separate from WebContainer's internal file system.
-    // It's useful if you want persistent storage in the browser's IndexedDB.
+    // Set Up Virtual File System (BrowserFS) - for persistent browser storage
     BrowserFS.configure({ fs: "IndexedDB", options: {} }, function(err) {
       if (err) {
         console.error("BrowserFS Error:", err);
@@ -205,7 +216,7 @@
         return;
       }
       const fs = BrowserFS.BFSRequire('fs');
-      fs.writeFile('/browserfs_test.txt', 'Hello from BrowserFS!', function(err) {
+      fs.writeFile('/browserfs_test.txt', 'Hello from BrowserFS (persistent storage)!', function(err) {
         if (err) {
           console.error("BrowserFS Write Error:", err);
           terminal.write(`\r\nBrowserFS Write Error: ${err.message}\r\n`);
@@ -218,7 +229,7 @@
             return;
           }
           console.log("BrowserFS content (in browser console):", data);
-          terminal.write(`\r\nBrowserFS loaded: ${data}\r\n`);
+          terminal.write(`\r\nBrowserFS test file content: ${data}\r\n\r\n`);
         });
       });
     });
