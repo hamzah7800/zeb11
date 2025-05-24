@@ -1,515 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Zeb11 Notepad + Terminal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
+  <title>Terminal</title>
   <style>
-    /* Zeb11 inspired theme variables, augmented for Gnome-like dark mode */
-    :root {
-      --bg-light: #f0f0f0; /* Overall light background */
-      --fg-light: #333333; /* Overall light foreground */
-      --accent-light: #0078d7; /* Zeb11 light accent */
-      --header-bg-light: #e0e0e0;
-
-      --bg-dark: #2e3436; /* Gnome-like dark background */
-      --fg-dark: #eeeeee; /* Gnome-like dark foreground */
-      --accent-dark: #3465a4; /* Gnome-like blue accent */
-      --header-bg-dark: #3c3c3c;
-      --border-dark: #555753;
-      --shadow-dark: rgba(0, 0, 0, 0.4);
-
-      /* Dynamic Theme Variables */
-      --current-bg: var(--bg-dark);
-      --current-fg: var(--fg-dark);
-      --current-accent: var(--accent-dark);
-      --current-header-bg: var(--header-bg-dark);
-      --current-border: var(--border-dark);
-      --current-shadow: var(--shadow-dark);
-      --monaco-editor-bg: #212121; /* Monaco's default dark */
-      --terminal-bg: #000; /* Classic terminal black */
-    }
-
-    /* Apply light theme variables when data-theme="light" */
-    body[data-theme="light"] {
-      --current-bg: var(--bg-light);
-      --current-fg: var(--fg-light);
-      --current-accent: var(--accent-light);
-      --current-header-bg: var(--header-bg-light);
-      --current-border: #cccccc;
-      --current-shadow: rgba(0, 0, 0, 0.1);
-      --monaco-editor-bg: #ffffff; /* Monaco's default light */
-      --terminal-bg: #ffffff;
-    }
-
     body {
+      background: black;
+      color: lime;
+      font-family: monospace;
       margin: 0;
-      padding: 0;
-      font-family: 'Ubuntu', 'Segoe UI', sans-serif;
-      background: var(--current-bg);
-      color: var(--current-fg);
-      display: flex;
+    }
+    #terminal {
+      padding: 10px;
       height: 100vh;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    #toolbar {
-      background: var(--current-header-bg);
-      color: white; /* Buttons are typically white text on accent background */
-      padding: 10px 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 8px var(--current-shadow);
-      z-index: 10;
-    }
-
-    #toolbar span { /* Title */
-      font-size: 1.2rem;
-      font-weight: normal;
-      color: var(--current-fg); /* Title text color based on theme */
-    }
-
-    #toolbar button {
-      background: var(--current-accent);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      margin-left: 10px; /* Space between buttons */
-      cursor: pointer;
-      border-radius: 6px;
-      font-size: 1rem;
-      transition: background-color 0.2s ease, transform 0.1s ease;
-    }
-
-    #toolbar button:hover {
-      background: #204a87; /* Darker hover for Gnome blue */
-      transform: translateY(-1px);
-    }
-
-    body[data-theme="light"] #toolbar button:hover {
-        background: #005bb5; /* Darker hover for Zeb11 blue */
-    }
-
-    #toolbar button:active {
-      transform: translateY(0);
-    }
-
-    #main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    #editor-container {
-      flex: 1; /* Monaco takes full width of its container */
-      height: 100%;
-      border: none;
-      padding: 0; /* Monaco handles its own padding */
-      background: var(--monaco-editor-bg); /* Controlled by Monaco's theme */
-      overflow: hidden; /* Monaco handles its own scrolling */
-    }
-
-    #rightPane {
-      display: flex;
-      flex-direction: column;
-      flex: 1; /* Right pane takes remaining width */
-      border-left: 1px solid var(--current-border); /* Separator for the panes */
-      overflow: hidden; /* Contains preview and terminal */
-    }
-
-    #terminal-container { /* Renamed from #terminal for xterm.js integration */
-      flex: 1; /* Terminal takes half height */
-      background: var(--terminal-bg);
-      color: var(--current-fg);
-      padding: 0; /* xterm handles padding */
-      box-sizing: border-box;
-      overflow: hidden; /* xterm handles its own scrolling */
-      font-family: 'Ubuntu Mono', monospace;
-      font-size: 1rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    iframe {
-      flex: 1; /* iframe takes half height */
-      border: none; /* No extra borders for iframe */
-      border-bottom: 1px solid var(--current-border); /* Separator between preview and terminal */
-      width: 100%;
-      background: var(--current-bg); /* Match body background */
-    }
-
-    .xterm .xterm-viewport {
       overflow-y: auto;
     }
-
-    #mobile-input-hack {
-        position: absolute;
-        left: -9999px;
-        top: -9999px;
-        width: 1px;
-        height: 1px;
-        opacity: 0;
-        z-index: -1;
-    }
-
-    #tap-to-type-overlay {
-      position: absolute; /* Relative to #terminal-container */
-      top: 0;
-      left: 0;
+    input {
+      background: black;
+      color: lime;
+      border: none;
       width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 1.5rem;
-      cursor: pointer;
-      z-index: 5;
-      pointer-events: auto;
-      text-align: center;
-      flex-direction: column;
-    }
-
-    #tap-to-type-overlay p {
-        margin: 0;
-        padding: 10px;
-        background-color: var(--current-accent);
-        border-radius: 8px;
-    }
-
-    @media (hover: hover) and (pointer: fine) {
-        #tap-to-type-overlay {
-            display: none !important;
-        }
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-      #main {
-        flex-direction: column; /* Stack panes vertically */
-      }
-      #editor-container, #rightPane {
-        width: 100%;
-        height: 50%; /* Each takes half height */
-        border-left: none; /* Remove left border */
-      }
-      #editor-container {
-          border-bottom: 1px solid var(--current-border); /* Add bottom border for separation */
-      }
-      iframe {
-          height: 50%;
-          border-bottom: 1px solid var(--current-border);
-      }
-      #terminal-container {
-          height: 50%;
-      }
-      #toolbar button {
-        padding: 8px 15px;
-        font-size: 0.9rem;
-      }
-      #toolbar span {
-        font-size: 1rem;
-      }
-      #terminal-container, iframe {
-        font-size: 0.9rem;
-      }
-      #tap-to-type-overlay {
-        font-size: 1.2rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      #toolbar button {
-        padding: 6px 12px;
-        font-size: 0.8rem;
-      }
-      #toolbar span {
-        font-size: 0.9rem;
-      }
-      #terminal-container, iframe {
-        font-size: 0.8rem;
-      }
-      #tap-to-type-overlay {
-        font-size: 1rem;
-      }
     }
   </style>
 </head>
-<body data-theme="dark"> <div id="toolbar">
-    <span>Zeb11 Editor + Terminal</span>
-    <div>
-      <button id="run-html-preview">Run HTML Preview</button>
-      <button id="run-node-code">Run Node.js Code</button>
-      <button id="save-file">Save</button>
-      <button id="theme-toggle">Toggle Theme</button>
-    </div>
-  </div>
+<body>
+  <div id="terminal"></div>
+  <input id="input" autofocus>
+  <script>
+    const term = document.getElementById('terminal');
+    const input = document.getElementById('input');
 
-  <div id="main">
-    <div id="editor-container"></div>
-    <div id="rightPane">
-      <iframe id="preview"></iframe>
-      <div id="terminal-container"> <input type="text" id="mobile-input-hack" aria-label="Terminal input hack" />
-        <div id="tap-to-type-overlay">
-            <p>Tap here to type in terminal</p>
-            <small>(Virtual keyboard will appear)</small>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
-  <script src="https://unpkg.com/monaco-editor/min/vs/loader.js"></script>
-  <script src="https://unpkg.com/browserfs"></script>
-  <script src="https://unpkg.com/@stackblitz/webcontainer"></script>
-
-  <script type="module">
-    const xtermCss = document.createElement('link');
-    xtermCss.rel = 'stylesheet';
-    xtermCss.href = 'https://unpkg.com/xterm/css/xterm.css';
-    document.head.appendChild(xtermCss);
-
-    let editor;
-    let webContainerInstance;
-    let shellProcess;
-    let currentMonacoTheme = 'vs-dark'; // Tracks Monaco's specific theme
-
-    const body = document.body;
-    const preview = document.getElementById("preview");
-    const mobileInputHack = document.getElementById('mobile-input-hack');
-    const tapToTypeOverlay = document.getElementById('tap-to-type-overlay');
-
-    // IndexedDB setup and save/load functions
-    const DB_NAME = "ZebFS";
-    const STORE_NAME = "files";
-    const FILE_KEY = "index.html"; // The key for the editor content
-
-    function openDB() {
-        return new Promise((resolve, reject) => {
-            const dbReq = indexedDB.open(DB_NAME, 1);
-            dbReq.onupgradeneeded = () => {
-                const db = dbReq.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME);
-                }
-            };
-            dbReq.onsuccess = () => resolve(dbReq.result);
-            dbReq.onerror = () => reject(dbReq.error);
-        });
-    }
-
-    async function saveEditorContent() {
-        if (!editor) return; // Ensure editor is initialized
-        try {
-            const db = await openDB();
-            const tx = db.transaction(STORE_NAME, "readwrite");
-            const store = tx.objectStore(STORE_NAME);
-            store.put(editor.getValue(), FILE_KEY);
-            await tx.complete;
-            terminal.write('\r\nFile saved to local storage.\r\n');
-        } catch (e) {
-            terminal.write(`\r\nError saving file: ${e.message}\r\n`);
-            console.error("Save error:", e);
-        }
-        focusTerminal();
-    }
-
-    async function loadEditorContent() {
-        try {
-            const db = await openDB();
-            const tx = db.transaction(STORE_NAME, "readonly");
-            const store = tx.objectStore(STORE_NAME);
-            const content = await store.get(FILE_KEY);
-            if (content && editor) {
-                editor.setValue(content);
-            }
-        } catch (e) {
-            console.warn("No saved content or error loading:", e);
-            // This is fine on first load if no content exists
-        }
-    }
-
-    // Monaco Editor initialization
-    require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor/min/vs' }});
-    require(['vs/editor/editor.main'], function() {
-      editor = monaco.editor.create(document.getElementById('editor-container'), {
-        value: '// Write your JavaScript or HTML code here...\nconsole.log("Hello from Zeb11 IDE!");\n',
-        language: 'javascript', // Default to JavaScript, but can be changed by user
-        theme: currentMonacoTheme,
-        automaticLayout: true,
-        minimap: { enabled: false },
-        fontSize: 16,
-        fontFamily: 'Ubuntu Mono, Consolas, "Courier New", monospace'
-      });
-      loadEditorContent(); // Load content after editor is ready
-    });
-
-    // xterm.js theme definitions
-    const xtermThemes = {
-        'dark': {
-            background: '#000000', foreground: '#eeeeee', cursor: '#eeeeee', selection: '#555555',
-            black: '#000000', red: '#cc0000', green: '#4e9a06', yellow: '#c4a000',
-            blue: '#3465a4', magenta: '#75507b', cyan: '#06989a', white: '#d3d7cf',
-            brightBlack: '#555753', brightRed: '#ef2929', brightGreen: '#8ae234', brightYellow: '#fce94f',
-            brightBlue: '#729fcf', brightMagenta: '#ad7fa8', brightCyan: '#34e2e2', brightWhite: '#eeeeec'
-        },
-        'light': {
-            background: '#ffffff', foreground: '#333333', cursor: '#333333', selection: 'rgba(0, 120, 215, 0.3)',
-            black: '#000000', red: '#cc0000', green: '#4e9a06', yellow: '#c4a000',
-            blue: '#3465a4', magenta: '#75507b', cyan: '#06989a', white: '#d3d7cf',
-            brightBlack: '#555753', brightRed: '#ef2929', brightGreen: '#8ae234', brightYellow: '#fce94f',
-            brightBlue: '#729fcf', brightMagenta: '#ad7fa8', brightCyan: '#34e2e2', brightWhite: '#eeeeec'
-        }
+    const runCommand = (cmd) => {
+      let output = '';
+      switch (cmd.trim()) {
+        case 'help': output = 'Available commands: help, date, echo [text]'; break;
+        case 'date': output = new Date().toString(); break;
+        default:
+          if (cmd.startsWith('echo ')) {
+            output = cmd.slice(5);
+          } else {
+            output = 'Command not found';
+          }
+      }
+      term.innerHTML += `> ${cmd}<br>${output}<br>`;
+      term.scrollTop = term.scrollHeight;
     };
 
-    const terminal = new Terminal({
-      cursorBlink: true,
-      convertEol: true,
-      fontFamily: '"Ubuntu Mono", monospace',
-      fontSize: 16,
-      theme: xtermThemes.dark, // Default to dark theme
-      tabStopWidth: 8,
-      allowProposedApi: true
-    });
-    terminal.open(document.getElementById('terminal-container'));
-    terminal.write('Welcome to Zeb11 IDE!\r\n');
-    terminal.write('Initializing WebContainer...\r\n');
-
-    terminal.onData(e => {
-      if (shellProcess && shellProcess.input) {
-        shellProcess.input.write(e);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        runCommand(input.value);
+        input.value = '';
       }
     });
-
-    function focusTerminal() {
-        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
-        if (isTouchDevice) {
-            tapToTypeOverlay.style.display = 'flex';
-            tapToTypeOverlay.onclick = () => {
-                mobileInputHack.focus();
-                tapToTypeOverlay.style.display = 'none';
-            };
-        } else {
-            terminal.focus();
-            tapToTypeOverlay.style.display = 'none';
-        }
-    }
-
-    mobileInputHack.addEventListener('input', (e) => {
-        const value = e.target.value;
-        if (value.length > 0) {
-            shellProcess.input.write(value);
-            e.target.value = '';
-        }
-    });
-
-    terminal.onBlur(() => {
-        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
-        if (isTouchDevice && tapToTypeOverlay.style.display === 'none') {
-            mobileInputHack.focus();
-        }
-    });
-
-    // Theme Toggle Logic
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      const isLightTheme = body.getAttribute('data-theme') === 'light';
-
-      if (isLightTheme) {
-        body.setAttribute('data-theme', 'dark');
-        currentMonacoTheme = 'vs-dark';
-        terminal.setOption('theme', xtermThemes.dark);
-      } else {
-        body.setAttribute('data-theme', 'light');
-        currentMonacoTheme = 'vs-light';
-        terminal.setOption('theme', xtermThemes.light);
-      }
-
-      if (editor) {
-        monaco.editor.setTheme(currentMonacoTheme);
-      }
-    });
-
-    // Run HTML Preview
-    document.getElementById('run-html-preview').addEventListener('click', () => {
-      if (editor) {
-        preview.srcdoc = editor.getValue();
-        terminal.write('\r\nHTML/JS preview updated.\r\n');
-      }
-      focusTerminal();
-    });
-
-    // WebContainer (Node.js) Integration
-    import { WebContainer } from '@stackblitz/webcontainer';
-
-    async function initializeWebContainer() {
-      webContainerInstance = await WebContainer.boot();
-      terminal.write('WebContainer ready! Type commands or run Node.js code.\r\n');
-
-      await webContainerInstance.mount({
-        'index.js': {
-          file: {
-            contents: editor.getValue()
-          }
-        }
-      });
-
-      shellProcess = await webContainerInstance.spawn('jsh', {
-        env: {
-          PS1: '\x1b[1;32m$\x1b[0m '
-        }
-      });
-
-      shellProcess.output.pipeTo(new WritableStream({
-        write(data) {
-          terminal.write(data);
-        }
-      }));
-
-      shellProcess.exit.then((code) => {
-        terminal.write(`\r\njsh exited with code ${code}\r\n`);
-        shellProcess = null;
-      });
-
-      focusTerminal();
-    }
-
-    initializeWebContainer();
-
-    // Run Node.js Code
-    document.getElementById('run-node-code').addEventListener('click', async () => {
-      if (!webContainerInstance) {
-        terminal.write('\r\nWebContainer not ready yet. Please wait...\r\n');
-        return;
-      }
-
-      terminal.write('\x1bc'); // Clear terminal
-
-      terminal.write('\r\nRunning Node.js code...\r\n');
-      const codeToRun = editor.getValue();
-
-      await webContainerInstance.fs.writeFile('runme.js', codeToRun);
-
-      const runProcess = await webContainerInstance.spawn('node', ['runme.js']);
-
-      runProcess.output.pipeTo(new WritableStream({
-        write(data) {
-          terminal.write(data);
-        }
-      }));
-
-      const exitCode = await runProcess.exit;
-      terminal.write(`\r\nCode finished with exit code: ${exitCode}\r\n`);
-      terminal.write('\x1b[1;32m$\x1b[0m ');
-
-      focusTerminal();
-    });
-
-    // Save button event listener
-    document.getElementById('save-file').addEventListener('click', saveEditorContent);
   </script>
 </body>
 </html>
