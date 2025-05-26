@@ -210,7 +210,7 @@
     <div id="login-error" style="color:red; font-size:14px;"></div>
   </div>
 
-  <!-- Desktop Environment -->
+  <!-- Desktop -->
   <div id="desktop">
     <div id="start-menu">
       <div onclick="openApp('ZebGX Browser', 'https://iamnotapro.lolo.pro')">ZebGX Browser</div>
@@ -285,47 +285,38 @@
       btn.closest(".window").remove();
     }
 
+    function maximizeWindow(btn) {
+      const win = btn.closest(".window");
+      win.classList.toggle("fullscreen");
+    }
+
     function minimizeWindow(btn) {
       const win = btn.closest(".window");
       win.style.display = "none";
+      setTimeout(() => win.style.display = "flex", 100); // basic restore
     }
 
-    function maximizeWindow(btn) {
-      const win = btn.closest(".window");
-      const isMax = win.classList.toggle("fullscreen");
-      if (!isMax) {
-        win.style.top = "100px";
-        win.style.left = "100px";
-        win.style.width = "400px";
-        win.style.height = "300px";
-      }
-    }
-
-    function dragMouseDown(e, win) {
+    function dragMouseDown(e, windowEl) {
       e.preventDefault();
-      win.style.zIndex = ++zIndex;
-      let pos3 = e.clientX, pos4 = e.clientY;
+      let offsetX = e.clientX - windowEl.offsetLeft;
+      let offsetY = e.clientY - windowEl.offsetTop;
 
-      function elementDrag(e2) {
-        e2.preventDefault();
-        win.style.top = (win.offsetTop - (pos4 - e2.clientY)) + "px";
-        win.style.left = (win.offsetLeft - (pos3 - e2.clientX)) + "px";
-        pos3 = e2.clientX;
-        pos4 = e2.clientY;
+      function mouseMove(e) {
+        windowEl.style.left = `${e.clientX - offsetX}px`;
+        windowEl.style.top = `${e.clientY - offsetY}px`;
       }
 
-      function closeDragElement() {
-        document.removeEventListener("mouseup", closeDragElement);
-        document.removeEventListener("mousemove", elementDrag);
+      function mouseUp() {
+        document.removeEventListener("mousemove", mouseMove);
+        document.removeEventListener("mouseup", mouseUp);
       }
 
-      document.addEventListener("mouseup", closeDragElement);
-      document.addEventListener("mousemove", elementDrag);
+      document.addEventListener("mousemove", mouseMove);
+      document.addEventListener("mouseup", mouseUp);
     }
 
     function restartZeb11() {
-      document.getElementById("boot-screen").style.display = "flex";
-      setTimeout(() => location.reload(), 1000);
+      location.reload();
     }
   </script>
 </body>
