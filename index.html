@@ -210,7 +210,7 @@
     <div id="login-error" style="color:red; font-size:14px;"></div>
   </div>
 
-  <!-- Desktop -->
+  <!-- Desktop Environment -->
   <div id="desktop">
     <div id="start-menu">
       <div onclick="openApp('ZebGX Browser', 'https://iamnotapro.lolo.pro')">ZebGX Browser</div>
@@ -277,12 +277,12 @@
         </div>
         <iframe src="${url}" title="${title}"></iframe>
       `;
-
       document.getElementById("desktop").appendChild(win);
     }
 
     function closeWindow(btn) {
-      btn.closest(".window").remove();
+      const win = btn.closest(".window");
+      if (win) win.remove();
     }
 
     function maximizeWindow(btn) {
@@ -293,30 +293,29 @@
     function minimizeWindow(btn) {
       const win = btn.closest(".window");
       win.style.display = "none";
-      setTimeout(() => win.style.display = "flex", 100); // basic restore
-    }
-
-    function dragMouseDown(e, windowEl) {
-      e.preventDefault();
-      let offsetX = e.clientX - windowEl.offsetLeft;
-      let offsetY = e.clientY - windowEl.offsetTop;
-
-      function mouseMove(e) {
-        windowEl.style.left = `${e.clientX - offsetX}px`;
-        windowEl.style.top = `${e.clientY - offsetY}px`;
-      }
-
-      function mouseUp() {
-        document.removeEventListener("mousemove", mouseMove);
-        document.removeEventListener("mouseup", mouseUp);
-      }
-
-      document.addEventListener("mousemove", mouseMove);
-      document.addEventListener("mouseup", mouseUp);
     }
 
     function restartZeb11() {
       location.reload();
+    }
+
+    function dragMouseDown(e, element) {
+      e.preventDefault();
+      let offsetX = e.clientX - element.getBoundingClientRect().left;
+      let offsetY = e.clientY - element.getBoundingClientRect().top;
+
+      function mouseMoveHandler(ev) {
+        element.style.left = (ev.clientX - offsetX) + "px";
+        element.style.top = (ev.clientY - offsetY) + "px";
+      }
+
+      function mouseUpHandler() {
+        document.removeEventListener("mousemove", mouseMoveHandler);
+        document.removeEventListener("mouseup", mouseUpHandler);
+      }
+
+      document.addEventListener("mousemove", mouseMoveHandler);
+      document.addEventListener("mouseup", mouseUpHandler);
     }
   </script>
 </body>
