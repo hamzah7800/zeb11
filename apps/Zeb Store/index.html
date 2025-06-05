@@ -1,57 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zeb Store</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: #fafafa;
+      background-color: #f0f2f5;
       color: #333;
     }
+
     header {
-      background: #1e1e1e;
-      color: white;
-      padding: 10px;
+      background-color: #1e1e1e;
+      color: #fff;
+      padding: 16px;
       text-align: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
-    .apps {
-      display: flex;
-      flex-wrap: wrap;
-      padding: 20px;
+
+    h1 {
+      margin: 0;
+      font-size: 1.8em;
+    }
+
+    .games {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 20px;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
-    .app {
+
+    .game {
       background: white;
-      border: 1px solid #ccc;
-      width: 150px;
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 16px;
       text-align: center;
-      cursor: pointer;
-      transition: transform 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
-    .app:hover {
-      transform: translateY(-5px);
+
+    .game:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     }
-    .app-icon {
+
+    .game-icon {
       width: 64px;
       height: 64px;
-      margin-bottom: 10px;
+      object-fit: contain;
+      margin-bottom: 12px;
     }
+
+    .game h3 {
+      font-size: 1.1em;
+      margin: 8px 0;
+    }
+
     .install-btn {
-      background: #1e1e1e;
+      background-color: #1e1e1e;
       color: white;
       border: none;
-      padding: 5px 10px;
-      margin-top: 10px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.9em;
       cursor: pointer;
-      border-radius: 4px;
+      transition: background-color 0.2s;
     }
+
     .install-btn:hover {
-      background: #333;
+      background-color: #333;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #121212;
+        color: #ddd;
+      }
+
+      .game {
+        background: #1e1e1e;
+        border: 1px solid #444;
+      }
+
+      .install-btn {
+        background-color: #333;
+      }
+
+      .install-btn:hover {
+        background-color: #555;
+      }
     }
   </style>
 </head>
@@ -60,30 +106,30 @@
     <h1>Zeb Store</h1>
   </header>
 
-  <div class="apps">
-    <div class="app">
-      <img class="app-icon" src="../icons/zebgx.png" alt="ZebGX">
-      <h3>ZebGX Browser</h3>
-      <button class="install-btn" onclick="alert('ZebGX installed!')">Install</button>
+  <main class="games">
+    <div class="game">
+      <img class="game-icon" src="../icons/game1.png" alt="LOL Game Icon">
+      <h3>LOL Game</h3>
+      <button class="install-btn" onclick="window.open('https://lol.lolo.pro', '_blank')">Play</button>
     </div>
 
-    <div class="app">
-      <img class="app-icon" src="../icons/controlcenter.png" alt="Control Center">
-      <h3>Control Center</h3>
-      <button class="install-btn" onclick="alert('Control Center installed!')">Install</button>
+    <div class="game">
+      <img class="game-icon" src="../icons/game2.png" alt="I Am Not A Pro Game Icon">
+      <h3>I Am Not A Pro</h3>
+      <button class="install-btn" onclick="window.open('https://iamnotapro.lolo.pro', '_blank')">Play</button>
     </div>
 
-    <div class="app">
-      <img class="app-icon" src="../icons/theme.png" alt="Themes">
-      <h3>Theme Manager</h3>
-      <button class="install-btn" onclick="alert('Themes installed!')">Install</button>
+    <div class="game">
+      <img class="game-icon" src="../icons/game3.png" alt="Another Game Icon">
+      <h3>Another Game</h3>
+      <button class="install-btn" onclick="window.open('https://example.com', '_blank')">Play</button>
     </div>
 
-    <div class="app">
-      <img class="app-icon" src="../icons/settings.png" alt="Settings">
-      <h3>Settings</h3>
-      <button class="install-btn" onclick="alert('Settings installed!')">Install</button>
+    <div class="game">
+      <img class="game-icon" src="../icons/game4.png" alt="Mystery Game Icon">
+      <h3>Mystery Game</h3>
+      <button class="install-btn" onclick="window.open('https://example.org', '_blank')">Play</button>
     </div>
-  </div>
+  </main>
 </body>
 </html>
