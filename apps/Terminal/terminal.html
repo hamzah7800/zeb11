@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>Zeb Web Terminal</title>
   <style>
     body {
       background: #1a1a1a;
       color: #00ff00;
-      font-family: 'Cascadia Code', 'Fira Code', 'monospace';
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
       margin: 0;
       display: flex;
       flex-direction: column;
@@ -47,7 +48,7 @@
       border: none;
       outline: none;
       width: 100%;
-      font-family: 'Cascadia Code', 'Fira Code', 'monospace';
+      font-family: inherit;
       font-size: 1em;
     }
     #input:focus {
@@ -56,10 +57,10 @@
   </style>
 </head>
 <body>
-  <div id="terminal-output"></div>
+  <div id="terminal-output">Welcome to the Web Terminal!<br>Type 'help' for a list of commands.<br><br></div>
   <div id="input-line">
     <span id="prompt">user@web-terminal:~$&nbsp;</span>
-    <input id="input" autofocus spellcheck="false" autocomplete="off">
+    <input id="input" autofocus spellcheck="false" autocomplete="off" />
   </div>
 
   <script>
@@ -67,163 +68,96 @@
     const input = document.getElementById('input');
     const promptSpan = document.getElementById('prompt');
 
-    let commandHistory = [];
-    let historyIndex = -1;
-    let sudoMode = false;
-    let sudoCommandToExecute = '';
-
-    const SUDO_PASSWORD = 'password123';
-
-    const welcomeMessage = `Welcome to the Web Terminal!\nType 'help' for a list of commands.`;
-    termOutput.innerHTML += welcomeMessage + '<br><br>';
-
     const scrollToBottom = () => {
       termOutput.scrollTop = termOutput.scrollHeight;
     };
 
-    const writeToTerminal = (text, isCommand = false, isPasswordInput = false) => {
-      let prefix = '';
-      if (isCommand) {
-        prefix = `<span style="color: #00ff00;">user@web-terminal:~$</span> <span style="color: #00ff00;">${text}</span>`;
-      } else if (isPasswordInput) {
-        prefix = `<span style="color: #00ff00;">[sudo] password for user@web-terminal:</span> `;
-      } else {
-        prefix = text;
-      }
-      termOutput.innerHTML += `${prefix}<br>`;
+    const writeToTerminal = (text) => {
+      termOutput.innerHTML += text + "<br>";
       scrollToBottom();
     };
 
-    const executeCommand = async (cmd) => {
-      let output = '';
-      const [command, ...args] = cmd.split(' ');
+    const banner = `
+  ███████╗███████╗██████╗ ██╗    ██╗██╗███╗   ██╗
+  ██╔════╝██╔════╝██╔══██╗██║    ██║██║████╗  ██║
+  █████╗  █████╗  ██████╔╝██║ █╗ ██║██║██╔██╗ ██║
+  ██╔══╝  ██╔══╝  ██╔═══╝ ██║███╗██║██║██║╚██╗██║
+  ███████╗███████╗██║     ╚███╔███╔╝██║██║ ╚████║
+  ╚══════╝╚══════╝╚═╝      ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝
+           Zeb11 Web Terminal - v1.0.0`;
 
+    const executeCommand = (cmd) => {
+      const [command, ...args] = cmd.trim().split(' ');
       switch (command) {
         case 'help':
-          output = `Available commands:
-  <span style="color: #00ff00;">help</span> - Displays this help message.
-  <span style="color: #00ff00;">clear</span> - Clears the terminal screen.
-  <span style="color: #00ff00;">date</span> - Displays the current date and time.
-  <span style="color: #00ff00;">echo</span> <span style="color: #00ffff;">[text]</span> - Prints the given text.
-  <span style="color: #00ff00;">whoami</span> - Displays the current user.
-  <span style="color: #00ff00;">repo</span> - Shows the project GitHub link.
-  <span style="color: #00ff00;">about</span> - Info about this terminal.
-  <span style="color: #00ff00;">sudo</span> <span style="color: #00ffff;">[command]</span> - Execute as superuser.
-  <span style="color: #00ff00;">reboot</span> - Simulates a system reboot.`;
-          break;
+          return `Available commands:
+  help         - Show this help message.
+  clear        - Clear the screen.
+  date         - Show current date and time.
+  echo [text]  - Print text.
+  whoami       - Show current user.
+  exit         - End session.
+  banner       - Show Zeb11 banner.
+  motd         - Show message of the day.
+  cat readme.txt - Show welcome message.
+  boot         - Simulate Zeb11 boot.
+  ping [host]  - Simulate ping command.
+  curl [url]   - Simulate curl output.
+  repo         - Project GitHub link.`;
         case 'date':
-          output = new Date().toLocaleString();
-          break;
+          return new Date().toString();
+        case 'whoami':
+          return 'web-user';
         case 'echo':
-          output = args.join(' ');
-          break;
+          return args.join(' ');
         case 'clear':
           termOutput.innerHTML = '';
-          return;
-        case 'whoami':
-          output = 'web-user';
-          break;
+          return '';
+        case 'exit':
+          return 'Session ended. Refresh the page to start a new session.';
+        case 'banner':
+          return banner;
+        case 'motd':
+          return 'Welcome back, Commander.\nToday is a good day to hack.';
+        case 'cat':
+          if (args[0] === 'readme.txt') {
+            return 'Welcome to Zeb Web Terminal.';
+          }
+          return `cat: ${args[0]}: No such file`;
+        case 'boot':
+          return `[ OK ] Booting ZebOS...
+[ OK ] Loading kernel modules...
+[ OK ] Mounting virtual filesystem...
+[ OK ] Starting terminal environment...
+Welcome to Zeb11 Web Terminal.`;
+        case 'ping':
+          return `Pinging ${args[0] || 'localhost'} with 32 bytes of data:
+Reply from 127.0.0.1: bytes=32 time=1ms TTL=64
+Reply from 127.0.0.1: bytes=32 time=1ms TTL=64
+
+Ping statistics:
+  Packets: Sent = 2, Received = 2, Lost = 0 (0% loss)`;
+        case 'curl':
+          return `<html><body><h1>Welcome to ${args[0] || 'zeb11.com'}</h1></body></html>`;
         case 'repo':
-          output = 'Official Owner <a href="https://github.com/hamzah7800/zeb11" target="_blank" style="color: #00ffff;">press here</a>';
-          break;
-        case 'about':
-          output = 'This is a simple web-based terminal built with HTML, CSS, and JavaScript.';
-          break;
-        case 'reboot':
-          output = 'Error: reboot requires superuser privileges. Try "sudo reboot"';
-          break;
+          return 'Official Repo: <a href="https://github.com/hamzah7800/zeb11" target="_blank" style="color:#00ffff;">click here</a>';
         default:
-          output = `Command not found: ${command}. Type 'help' for a list of commands.`;
-      }
-      writeToTerminal(output);
-    };
-
-    const runCommand = async (cmd) => {
-      const trimmedCmd = cmd.trim();
-
-      if (sudoMode) {
-        if (trimmedCmd === SUDO_PASSWORD) {
-          writeToTerminal('Password accepted.');
-          sudoMode = false;
-          await executeCommand(sudoCommandToExecute);
-          sudoCommandToExecute = '';
-        } else {
-          writeToTerminal('Sorry, try again.');
-          sudoMode = false;
-          sudoCommandToExecute = '';
-        }
-        writeToTerminal('');
-        return;
-      }
-
-      writeToTerminal(trimmedCmd, true);
-
-      if (trimmedCmd === '') {
-        scrollToBottom();
-        return;
-      }
-
-      if (commandHistory.length === 0 || commandHistory[commandHistory.length - 1] !== trimmedCmd) {
-        commandHistory.push(trimmedCmd);
-      }
-      historyIndex = commandHistory.length;
-
-      const [command, ...args] = trimmedCmd.split(' ');
-
-      if (command === 'sudo') {
-        const targetCommand = args.join(' ');
-        if (targetCommand === 'reboot') {
-          sudoMode = true;
-          sudoCommandToExecute = targetCommand;
-          writeToTerminal('', false, true);
-          input.type = 'password';
-        } else {
-          writeToTerminal(`sudo: ${targetCommand}: command not found`);
-          writeToTerminal('');
-        }
-      } else if (command === 'reboot') {
-        executeCommand(trimmedCmd);
-        writeToTerminal('');
-      } else {
-        executeCommand(trimmedCmd);
-        writeToTerminal('');
+          return `Command not found: ${command}`;
       }
     };
 
-    input.addEventListener('keydown', e => {
+    input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        runCommand(input.value);
+        const cmd = input.value.trim();
+        writeToTerminal(`<span style="color: #00ff00;">user@web-terminal:~$</span> ${cmd}`);
+        const output = executeCommand(cmd);
+        if (output) writeToTerminal(output.replace(/\n/g, '<br>'));
         input.value = '';
-        if (!sudoMode) {
-          input.type = 'text';
-        }
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (historyIndex > 0) {
-          historyIndex--;
-          input.value = commandHistory[historyIndex];
-        }
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (historyIndex < commandHistory.length - 1) {
-          historyIndex++;
-          input.value = commandHistory[historyIndex];
-        } else {
-          historyIndex = commandHistory.length;
-          input.value = '';
-        }
       }
     });
 
-    window.addEventListener('load', () => {
-      input.focus();
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!input.contains(e.target) && !termOutput.contains(e.target)) {
-        input.focus();
-      }
-    });
+    window.addEventListener('load', () => input.focus());
+    document.addEventListener('click', () => input.focus());
   </script>
 </body>
 </html>
